@@ -26,6 +26,16 @@ jobs:
         sudo apt update
         sudo apt install -y libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev
 
+    - name: Download and build zlib for cross-compilation
+      run: |
+        wget http://zlib.net/zlib-1.2.11.tar.gz
+        tar -xzvf zlib-1.2.11.tar.gz
+        cd zlib-1.2.11
+        # 设置交叉编译环境，确保 zlib 使用正确的目标架构编译
+        ./configure --prefix=/tmp/zlib --host=aarch64-w64-mingw32
+        make
+        make install
+
     - name: Download Nginx source
       run: |
         wget https://nginx.org/download/nginx-1.23.0.tar.gz
@@ -34,16 +44,15 @@ jobs:
     - name: Configure Nginx for cross-compilation using LLVM
       run: |
         cd nginx-1.23.0
-        # 设置编译器及目标参数
         export CC="clang --target=aarch64-w64-mingw32"
         export CXX="clang++ --target=aarch64-w64-mingw32"
-        # 如果你有交叉构建支持，可以尝试使用 --crossbuild=ARM64，否则移除此参数
+        # 使用 zlib 的安装路径
         ./configure \
-          --crossbuild=ARM64 \
           --prefix=/tmp/nginx \
           --with-pcre \
-          --with-zlib \
-          --with-openssl
+          --with-openssl \
+          --with-zlib=/tmp/zlib \
+          --crossbuild=ARM64
 
     - name: Build Nginx for ARM64 Windows using LLVM
       run: |
