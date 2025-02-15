@@ -18,6 +18,12 @@ jobs:
 
     - name: Set up MinGW-w64 toolchain for ARM64
       run: |
+        # 启用 Universe 和 Multiverse 仓库
+        sudo add-apt-repository universe
+        sudo add-apt-repository multiverse
+        sudo apt update
+    - name: Set up MinGW-w64 toolchain for ARM64
+      run: |
         sudo apt update
         sudo apt install -y mingw-w64-aarch64  # 安装交叉编译工具链
 
