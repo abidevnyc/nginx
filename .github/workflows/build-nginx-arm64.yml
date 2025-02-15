@@ -31,12 +31,20 @@ jobs:
         wget https://nginx.org/download/nginx-1.23.0.tar.gz
         tar -xzvf nginx-1.23.0.tar.gz
 
-    - name: Configure Nginx for cross-compilation using Clang
+    - name: Set up cross-compilation environment
+      run: |
+        # 设置交叉编译工具链
+        export PATH=/usr/bin:$PATH
+        export CC=clang
+        export CXX=clang++
+        export AR=llvm-ar
+        export AS=llvm-as
+        export LD=lld
+
+    - name: Configure Nginx for cross-compilation
       run: |
         cd nginx-1.23.0
-        CC=clang CXX=clang++ ./configure \
-          --host=aarch64-w64-mingw32 \
-          --prefix=/tmp/nginx \
+        ./configure --prefix=/tmp/nginx \
           --with-pcre \
           --with-zlib \
           --with-openssl
