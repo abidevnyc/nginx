@@ -16,7 +16,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install LLVM and Clang for ARM64 cross-compilation
+    - name: Install LLVM and Clang for cross-compilation
       run: |
         sudo apt update
         sudo apt install -y clang llvm lld build-essential
@@ -31,20 +31,16 @@ jobs:
         wget https://nginx.org/download/nginx-1.23.0.tar.gz
         tar -xzvf nginx-1.23.0.tar.gz
 
-    - name: Set up cross-compilation environment
-      run: |
-        # 设置交叉编译工具链
-        export PATH=/usr/bin:$PATH
-        export CC=clang
-        export CXX=clang++
-        export AR=llvm-ar
-        export AS=llvm-as
-        export LD=lld
-
-    - name: Configure Nginx for cross-compilation
+    - name: Configure Nginx for cross-compilation using LLVM
       run: |
         cd nginx-1.23.0
-        ./configure --prefix=/tmp/nginx \
+        # 设置编译器及目标参数
+        export CC="clang --target=aarch64-w64-mingw32"
+        export CXX="clang++ --target=aarch64-w64-mingw32"
+        # 如果你有交叉构建支持，可以尝试使用 --crossbuild=ARM64，否则移除此参数
+        ./configure \
+          --crossbuild=ARM64 \
+          --prefix=/tmp/nginx \
           --with-pcre \
           --with-zlib \
           --with-openssl
@@ -59,7 +55,7 @@ jobs:
       run: |
         cd /tmp/nginx-arm64
         zip -r nginx-arm64.zip .
-    
+
     - name: Upload the artifact
       uses: actions/upload-artifact@v4
       with:
