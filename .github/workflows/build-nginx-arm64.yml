@@ -1,0 +1,59 @@
+name: Build Nginx for Windows ARM64
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用 Ubuntu 作为构建环境
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up MinGW-w64 toolchain for ARM64
+      run: |
+        sudo apt update
+        sudo apt install -y mingw-w64-aarch64  # 安装交叉编译工具链
+
+    - name: Install dependencies for Nginx
+      run: |
+        sudo apt update
+        sudo apt install -y libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev
+
+    - name: Download Nginx source
+      run: |
+        wget https://nginx.org/download/nginx-1.23.0.tar.gz
+        tar -xzvf nginx-1.23.0.tar.gz
+
+    - name: Configure Nginx for cross-compilation
+      run: |
+        cd nginx-1.23.0
+        ./configure \
+          --crossbuild=ARM64 \
+          --prefix=/tmp/nginx \
+          --with-pcre \
+          --with-zlib \
+          --with-openssl
+
+    - name: Build Nginx for ARM64 Windows
+      run: |
+        cd nginx-1.23.0
+        make
+        make install DESTDIR=/tmp/nginx-arm64
+
+    - name: Create Windows ARM64 executable package
+      run: |
+        cd /tmp/nginx-arm64
+        zip -r nginx-arm64.zip .
+    
+    - name: Upload the artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: nginx-arm64
+        path: /tmp/nginx-arm64/nginx-arm64.zip
