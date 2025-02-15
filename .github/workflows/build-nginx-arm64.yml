@@ -1,4 +1,4 @@
-name: Build Nginx for Windows ARM64
+name: Build Nginx for Windows ARM64 with LLVM
 
 on:
   push:
@@ -16,16 +16,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up MinGW-w64 toolchain for ARM64
-      run: |
-        # 启用 Universe 和 Multiverse 仓库
-        sudo add-apt-repository universe
-        sudo add-apt-repository multiverse
-        sudo apt update
-    - name: Set up MinGW-w64 toolchain for ARM64
+    - name: Install LLVM and Clang for ARM64 cross-compilation
       run: |
         sudo apt update
-        sudo apt install -y mingw-w64-aarch64  # 安装交叉编译工具链
+        sudo apt install -y clang llvm lld build-essential
 
     - name: Install dependencies for Nginx
       run: |
@@ -37,17 +31,17 @@ jobs:
         wget https://nginx.org/download/nginx-1.23.0.tar.gz
         tar -xzvf nginx-1.23.0.tar.gz
 
-    - name: Configure Nginx for cross-compilation
+    - name: Configure Nginx for cross-compilation using Clang
       run: |
         cd nginx-1.23.0
-        ./configure \
-          --crossbuild=ARM64 \
+        CC=clang CXX=clang++ ./configure \
+          --host=aarch64-w64-mingw32 \
           --prefix=/tmp/nginx \
           --with-pcre \
           --with-zlib \
           --with-openssl
 
-    - name: Build Nginx for ARM64 Windows
+    - name: Build Nginx for ARM64 Windows using LLVM
       run: |
         cd nginx-1.23.0
         make
